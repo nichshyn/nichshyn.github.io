@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Тайнопись: от шифра Цезаря до RSA</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e8eee9;--ink:#13261f;--mute:#4b6158;--card:#f7faf8;--line:#c3d3ca;--acc:#0f766e;--hi:#b45f06;--on:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1b17;--ink:#e4efe9;--mute:#9ab3a8;--card:#152720;--line:#2a4237;--acc:#3dbfb0;--hi:#f0a040;--on:#0e1b17}}
+:root[data-theme="dark"]{--bg:#0e1b17;--ink:#e4efe9;--mute:#9ab3a8;--card:#152720;--line:#2a4237;--acc:#3dbfb0;--hi:#f0a040;--on:#0e1b17}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 18px/1.7 "Fira Sans",system-ui,sans-serif}
+h1,h2,h3{line-height:1.2;margin:0}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between;padding:12px 0;font-size:14px;border-bottom:1px solid var(--line);z-index:5}
+header b{font-weight:700}
+nav{display:flex;gap:14px;flex-wrap:wrap}
+nav a{color:inherit;text-decoration:none;border-bottom:2px solid transparent}
+nav a:hover,nav a:focus-visible{border-color:var(--acc);outline:none}
+.hero{padding:70px 0 40px}
+.hero h1{font-size:clamp(34px,6.5vw,68px);font-weight:700;letter-spacing:-.02em;max-width:14ch}
+.hero p{max-width:54ch;color:var(--mute);font-size:20px;margin:22px 0 0}
+section{padding:54px 0;border-top:1px solid var(--line)}
+h2{font-size:clamp(25px,3.6vw,36px);font-weight:700;margin-bottom:16px}
+h3{font-size:20px;margin:22px 0 6px}
+p{max-width:66ch;margin:0 0 14px}
+.mute{color:var(--mute)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:22px 0}
+label{display:block;font-size:14px;color:var(--mute);margin:12px 0 4px}
+textarea,input[type=text],input[type=number],select{width:100%;font:400 16px "Fira Code",monospace;background:var(--bg);color:var(--ink);border:2px solid var(--line);border-radius:10px;padding:9px 12px}
+textarea{min-height:76px;resize:vertical}
+input[type=range]{width:100%;accent-color:var(--acc)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.out{font:500 17px/1.6 "Fira Code",monospace;background:var(--bg);border-left:4px solid var(--hi);padding:12px 14px;border-radius:0 10px 10px 0;word-break:break-word;min-height:3em;margin-top:6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+button{font:500 15px "Fira Sans",sans-serif;border:2px solid var(--acc);background:var(--acc);color:var(--on);border-radius:99px;padding:7px 16px;cursor:pointer;margin:8px 8px 0 0}
+button.alt{background:transparent;color:var(--ink);border-color:var(--line)}
+.bars{display:grid;gap:5px;margin-top:10px;font:14px "Fira Code",monospace}
+.bar{display:grid;grid-template-columns:22px 1fr 48px;gap:8px;align-items:center}
+.bar i{display:block;height:14px;background:var(--acc);border-radius:3px}
+.tl{list-style:none;margin:20px 0 0;padding:0 0 0 22px;border-left:3px solid var(--acc)}
+.tl li{position:relative;margin-bottom:22px}
+.tl li::before{content:"";position:absolute;left:-30px;top:9px;width:11px;height:11px;border-radius:50%;background:var(--hi)}
+.tl b{display:block}
+.fig{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:20px 0}
+.fig div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.fig b{display:block;font-size:26px;color:var(--acc)}
+.opts{display:grid;gap:8px;margin-top:10px}
+.opt{text-align:left;background:var(--bg);color:var(--ink);border-color:var(--line);border-radius:12px;margin:0}
+.opt.ok{border-color:#2f9e6b;background:color-mix(in srgb,#2f9e6b 22%,var(--bg))}
+.opt.bad{border-color:#d0475b;background:color-mix(in srgb,#d0475b 20%,var(--bg))}
+.exp{color:var(--mute);font-size:16px;min-height:1.6em;margin:10px 0 0}
+footer{padding:30px 0 56px;color:var(--mute);font-size:14px;border-top:1px solid var(--line)}
+@media (max-width:720px){.two{grid-template-columns:1fr}body{font-size:17px}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><b>Тайнопись</b><nav><a href="#why">Зачем</a><a href="#caesar">Цезарь</a><a href="#freq">Взлом</a><a href="#vig">Виженер</a><a href="#enigma">Энигма</a><a href="#hash">Хеши</a><a href="#rsa">RSA</a><a href="#quiz">Тест</a></nav></header>
+
+<div class="hero">
+<h1>Как люди прячут слова</h1>
+<p>Две с половиной тысячи лет криптографы придумывают шифры, а криптоаналитики их ломают. Эта страница ведёт от палки спартанцев до защиты банковской карты. Почти везде можно попробовать самому.</p>
+</div>
+
+<section id="why">
+<h2>Зачем вообще шифровать</h2>
+<p>Шифрование нужно там, где сообщение идёт по каналу, который кто-то может подслушать: гонец по дороге, радиоэфир, провод или Wi-Fi. Задача шифра простая: даже если текст перехвачен, прочитать его сможет только тот, у кого есть ключ.</p>
+<p>У любой системы шифрования есть три части: исходный текст (открытый текст), правило преобразования (алгоритм) и секретная добавка (ключ). Принцип Керкгоффса, сформулированный в XIX веке, гласит: безопасность должна держаться только на секретности ключа, а алгоритм может быть известен врагу. Именно так работают современные шифры.</p>
+<div class="fig">
+<div><b>Шифр</b>заменяет или переставляет буквы и символы</div>
+<div><b>Код</b>заменяет целые слова и фразы по таблице</div>
+<div><b>Стеганография</b>прячет само существование сообщения</div>
+</div>
+<h3>Скитала</h3>
+<p>Одно из самых древних устройств, известных по античным источникам, это скитала: в Спарте ленту обматывали вокруг палки определённой толщины и писали вдоль палки. Размотанная лента выглядела как набор случайных букв, а прочитать её мог тот, у кого была палка такого же диаметра. Это шифр перестановки, ключом служит толщина палки.</p>
+</section>
+
+<section id="caesar">
+<h2>Шифр Цезаря</h2>
+<p>По сообщению древнеримского историка Светония, Юлий Цезарь сдвигал каждую букву на три позиции вперёд по алфавиту. Сегодня так называют любой сдвиг на постоянное число. Здесь используется русский алфавит из 32 букв (ё заменяется на е).</p>
+<p>Математика: если буквы пронумеровать от 0 до 31, то зашифрованная буква получается как (номер + ключ) mod 32. Расшифровка делает то же самое со сдвигом в другую сторону.</p>
+<div class="card">
+<label for="ct">Текст</label>
+<textarea id="ct">Победа будет за нами, держите строй и не выходите из укрытия до рассвета</textarea>
+<label for="ck">Сдвиг: <span id="ckv">3</span></label>
+<input type="range" id="ck" min="1" max="31" value="3">
+<button id="cenc">Зашифровать</button><button id="cdec" class="alt">Расшифровать</button>
+<div class="out" id="cout" aria-live="polite"></div>
+</div>
+<p class="mute">Всего 31 ненулевой ключ, поэтому компьютер перебирает их все мгновенно. Шифр Цезаря не защищает ничего, зато отлично объясняет саму идею ключа.</p>
+</section>
+
+<section id="freq">
+<h2>Как шифр Цезаря ломают</h2>
+<p>Первым частотный анализ описал арабский учёный аль-Кинди в IX веке. Идея в том, что в любом языке буквы встречаются с разной частотой. В русском чаще всех идут о, е, а, и, н, т. Если шифр просто заменяет одну букву другой, самая частая буква шифротекста, скорее всего, скрывает самую частую букву языка.</p>
+<div class="card">
+<label for="ft">Шифротекст (можно вставить свой или взять результат из блока выше)</label>
+<textarea id="ft"></textarea>
+<button id="fgo">Показать частоты</button><button id="fcrack" class="alt">Попробовать взломать</button>
+<div class="bars" id="fbars"></div>
+<div class="out" id="fout" aria-live="polite"></div>
+</div>
+<p class="mute">Метод надёжен только на длинных текстах: на коротких частоты «плавают», и взлом может ошибиться. Попробуй вставить абзац побольше.</p>
+</section>
+
+<section id="vig">
+<h2>Шифр Виженера</h2>
+<p>Чтобы сломать частотный анализ, придумали полиалфавитные шифры: разные буквы шифруются с разными сдвигами. Шифр Виженера, описанный в XVI веке, берёт слово-ключ и повторяет его под текстом. Каждая буква ключа задаёт свой сдвиг, как у Цезаря. Из-за этого одна и та же буква текста превращается в разные буквы шифра, и простые частоты перестают работать.</p>
+<p>Шифр называли «неразгадываемым» около трёх веков, пока в 1863 году Фридрих Казиски не опубликовал метод определения длины ключа по повторяющимся фрагментам. После этого задача сводится к нескольким шифрам Цезаря.</p>
+<div class="card">
+<div class="two"><div><label for="vt">Текст</label><textarea id="vt">Встреча состоится завтра на старом мосту</textarea></div>
+<div><label for="vk">Ключ (русские буквы)</label><input type="text" id="vk" value="ключ"></div></div>
+<button id="venc">Зашифровать</button><button id="vdec" class="alt">Расшифровать</button>
+<div class="out" id="vout" aria-live="polite"></div>
+</div>
+</section>
+
+<section id="enigma">
+<h2>Энигма и война машин</h2>
+<p>В 1918 году немецкий инженер Артур Шербиус запатентовал электромеханическую шифровальную машину «Энигма». Нажатие клавиши пропускало ток через набор вращающихся роторов, и на панели загоралась зашифрованная буква. После каждого нажатия роторы поворачивались, поэтому шифр менялся от буквы к букве.</p>
+<p>Число возможных начальных настроек военной версии исчисляется миллиардами миллиардов. Однако у машины была слабость: буква никогда не шифровалась сама в себя. Польские математики Мариан Реевский, Ежи Ружицкий и Хенрик Зыгальский вскрыли Энигму ещё в 1932 году и передали результаты союзникам. В британском Блетчли-парке команда, в которую входил Алан Тьюринг, создала электромеханические машины «Бомба» для поиска настроек.</p>
+<p>Историки считают, что вскрытие немецких шифров помогло сократить войну, хотя точную оценку назвать трудно. Главный урок: криптографию подвели не математика, а человеческие привычки операторов, например шаблонные начала сообщений вроде сводок погоды.</p>
+</section>
+
+<section id="hash">
+<h2>Хеш-функции: отпечаток вместо шифра</h2>
+<p>Хеш-функция превращает данные любой длины в строку фиксированной длины. Она не требует ключа и не предназначена для расшифровки. Свойства хорошего хеша: одинаковый вход всегда даёт одинаковый результат, малейшее изменение входа меняет результат до неузнаваемости, а по хешу нельзя восстановить исходные данные.</p>
+<p>Поэтому сайты хранят не ваш пароль, а его хеш: при входе они хешируют введённый пароль и сравнивают отпечатки. Для защиты от перебора используют специальные медленные алгоритмы и «соль», случайную добавку к каждому паролю. Ниже показан SHA-256, он считается прямо в твоём браузере.</p>
+<div class="card">
+<label for="ht">Любой текст</label>
+<input type="text" id="ht" value="Привет">
+<div class="out" id="hout" aria-live="polite"></div>
+<p class="mute" style="margin:8px 0 0;font-size:15px">Поменяй одну букву и посмотри, как изменится хеш целиком. Длина всегда 64 шестнадцатеричных символа.</p>
+</div>
+</section>
+
+<section id="rsa">
+<h2>RSA: шифр с открытым ключом</h2>
+<p>У всех шифров выше есть общая беда: ключ должен быть известен обеим сторонам, а передать его надо по безопасному каналу. В 1976 году Диффи и Хеллман предложили идею, а в 1977 году Райвест, Шамир и Адлеман создали практичную систему RSA с двумя ключами: открытым для шифрования и закрытым для расшифровки. Открытый ключ можно публиковать на сайте, закрытый хранится только у владельца.</p>
+<p>Безопасность опирается на то, что перемножить два больших простых числа легко, а разложить произведение обратно на множители очень трудно. Ниже настоящая арифметика RSA, но с крошечными числами, чтобы всё можно было проверить вручную. В реальности используют числа в сотни цифр.</p>
+<div class="card">
+<div class="two">
+<div><label for="rp">Простое p</label><select id="rp"></select></div>
+<div><label for="rq">Простое q</label><select id="rq"></select></div>
+<div><label for="re">Открытая экспонента e</label><select id="re"></select></div>
+<div><label for="rm">Сообщение (число меньше n)</label><input type="number" id="rm" value="42" min="1"></div>
+</div>
+<div class="out" id="rout" aria-live="polite"></div>
+</div>
+<p class="mute">Шаги: n = p·q; φ = (p−1)(q−1); закрытая экспонента d удовлетворяет e·d ≡ 1 (mod φ); шифротекст c = m<sup>e</sup> mod n; расшифровка m = c<sup>d</sup> mod n. Если квантовые компьютеры станут достаточно мощными, алгоритм Шора позволит ломать RSA, поэтому уже разрабатывают постквантовые алгоритмы.</p>
+</section>
+
+<section id="time">
+<h2>Хронология</h2>
+<ul class="tl">
+<li><b>VII–V вв. до н. э.</b>В Спарте применяют скиталу, шифр перестановки.</li>
+<li><b>I в. до н. э.</b>Цезарь использует сдвиг букв в военной переписке.</li>
+<li><b>IX в.</b>Аль-Кинди описывает частотный анализ.</li>
+<li><b>XVI в.</b>Появляется шифр Виженера.</li>
+<li><b>1918–1945.</b>Энигма и её вскрытие.</li>
+<li><b>1977.</b>Опубликован алгоритм RSA.</li>
+<li><b>2001.</b>Стандартом симметричного шифрования в США становится AES, он до сих пор защищает соединения в интернете.</li>
+</ul>
+</section>
+
+<section id="quiz">
+<h2>Проверь себя</h2>
+<div class="card" id="qb"></div>
+</section>
+<footer></footer>
+</div>
+
+<script>
+var A="абвгдежзийклмнопрстуфхцчшщъыьэюя",$=function(i){return document.getElementById(i)};
+function norm(t){return t.toLowerCase().replace(/ё/g,"е")}
+function caesar(t,k,d){return Array.from(norm(t)).map(function(c){var i=A.indexOf(c);return i<0?c:A[((i+d*k)%32+32)%32]}).join("")}
+function vig(t,key,d){
+ var ks=Array.from(norm(key)).filter(function(c){return A.indexOf(c)>=0}).map(function(c){return A.indexOf(c)});
+ if(!ks.length)return "Введи ключ из русских букв.";
+ var j=0;return Array.from(norm(t)).map(function(c){var i=A.indexOf(c);if(i<0)return c;var r=A[((i+d*ks[j%ks.length])%32+32)%32];j++;return r}).join("");
+}
+/* Цезарь */
+$("ck").oninput=function(){$("ckv").textContent=this.value};
+$("cenc").onclick=function(){var o=caesar($("ct").value,+$("ck").value,1);$("cout").textContent=o;$("ft").value=o};
+$("cdec").onclick=function(){$("cout").textContent=caesar($("ct").value,+$("ck").value,-1)};
+$("cenc").click();
+/* Частоты */
+function counts(t){var c={},n=0;Array.from(norm(t)).forEach(function(ch){if(A.indexOf(ch)>=0){c[ch]=(c[ch]||0)+1;n++}});return{c:c,n:n}}
+function bars(){
+ var r=counts($("ft").value),box=$("fbars");box.innerHTML="";
+ if(!r.n){box.textContent="Нет русских букв для анализа.";return r}
+ Object.keys(r.c).sort(function(a,b){return r.c[b]-r.c[a]}).slice(0,10).forEach(function(k){
+  var p=r.c[k]/r.n*100,d=document.createElement("div");d.className="bar";
+  d.innerHTML="<span>"+k+'</span><i style="width:'+Math.min(100,p*5)+'%"></i><span>'+p.toFixed(1)+"%</span>";box.appendChild(d)});
+ return r;
+}
+$("fgo").onclick=bars;
+$("fcrack").onclick=function(){
+ var r=bars();if(!r.n)return;
+ var top=Object.keys(r.c).sort(function(a,b){return r.c[b]-r.c[a]})[0];
+ var k=((A.indexOf(top)-A.indexOf("о"))%32+32)%32;
+ $("fout").textContent="Предполагаемый сдвиг: "+k+". "+caesar($("ft").value,k,-1);
+};
+/* Виженер */
+$("venc").onclick=function(){$("vout").textContent=vig($("vt").value,$("vk").value,1)};
+$("vdec").onclick=function(){$("vout").textContent=vig($("vt").value,$("vk").value,-1)};
+$("venc").click();
+/* SHA-256 */
+function hashIt(){
+ var v=$("ht").value;
+ if(!window.crypto||!crypto.subtle){$("hout").textContent="Браузер не поддерживает SHA-256.";return}
+ crypto.subtle.digest("SHA-256",new TextEncoder().encode(v)).then(function(b){
+  $("hout").textContent=Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0")}).join("");
+ }).catch(function(){$("hout").textContent="Не удалось посчитать хеш."});
+}
+$("ht").oninput=hashIt;hashIt();
+/* RSA */
+function gcd(a,b){return b?gcd(b,a%b):a}
+function mp(b,e,m){var r=1;b%=m;while(e>0){if(e&1)r=r*b%m;b=b*b%m;e>>=1}return r}
+[11,13,17,19,23,29].forEach(function(p){[$("rp"),$("rq")].forEach(function(s,i){var o=new Option(p,p);if(i==1&&p==13)o.selected=true;s.add(o)})});
+[3,5,7,11,13].forEach(function(e){$("re").add(new Option(e,e))});
+function rsa(){
+ var p=+$("rp").value,q=+$("rq").value,e=+$("re").value,m=+$("rm").value,o=$("rout");
+ if(p==q){o.textContent="Выбери разные p и q.";return}
+ var n=p*q,f=(p-1)*(q-1);
+ if(gcd(e,f)!=1){o.textContent="e должно быть взаимно просто с φ="+f+". Выбери другое e.";return}
+ if(!(m>=1&&m<n)){o.textContent="Сообщение должно быть от 1 до "+(n-1)+".";return}
+ var d=1;while((e*d)%f!=1)d++;
+ var c=mp(m,e,n),back=mp(c,d,n);
+ o.innerHTML="n = "+n+", φ = "+f+"<br>Открытый ключ: ("+e+", "+n+")<br>Закрытый ключ: d = "+d+"<br>Шифротекст c = "+c+"<br>Расшифровано: "+back;
+}
+["rp","rq","re","rm"].forEach(function(i){$(i).oninput=rsa;$(i).onchange=rsa});rsa();
+/* Тест */
+var Q=[
+{q:"Что в шифре Цезаря служит ключом?",o:["Длина текста","Величина сдвига","Язык сообщения","Цвет чернил"],a:1,e:"Ключ показывает, на сколько позиций сдвигается каждая буква."},
+{q:"На чём основан частотный анализ?",o:["На скорости процессора","На разной частоте букв в языке","На длине слов","На знаках препинания"],a:1,e:"Буквы языка встречаются неравномерно, и шифр простой замены этого не скрывает."},
+{q:"Чем шифр Виженера лучше шифра Цезаря?",o:["Использует несколько сдвигов по ключевому слову","Не требует ключа","Работает только с цифрами","Не меняет текст"],a:0,e:"Одна буква текста превращается в разные буквы шифра, и простой подсчёт частот не работает."},
+{q:"Что верно для хеш-функции?",o:["По хешу легко восстановить исходный текст","Для неё нужен секретный ключ расшифровки","Малое изменение входа сильно меняет результат","Результат зависит от времени"],a:2,e:"Это называют лавинным эффектом. Хеш не расшифровывается, а только сравнивается."},
+{q:"На какой задаче держится безопасность RSA?",o:["Умножение простых чисел","Разложение большого числа на простые множители","Сложение больших чисел","Сортировка списка"],a:1,e:"Перемножить числа легко, а разложить результат обратно на множители очень трудно."}];
+var qi=0,sc=0,qb=$("qb");
+function show(){
+ qb.innerHTML="";
+ if(qi>=Q.length){var h=document.createElement("h3");h.textContent="Результат: "+sc+" из "+Q.length;qb.appendChild(h);
+  var r=document.createElement("button");r.textContent="Пройти ещё раз";r.onclick=function(){qi=0;sc=0;show()};qb.appendChild(r);return}
+ var d=Q[qi],done=false,h3=document.createElement("h3");h3.style.marginTop="0";h3.textContent=(qi+1)+"/"+Q.length+". "+d.q;qb.appendChild(h3);
+ var w=document.createElement("div");w.className="opts";qb.appendChild(w);
+ var ex=document.createElement("p");ex.className="exp";ex.setAttribute("aria-live","polite");qb.appendChild(ex);
+ d.o.forEach(function(t,i){var b=document.createElement("button");b.className="opt";b.textContent=t;
+  b.onclick=function(){if(done)return;done=true;w.children[d.a].classList.add("ok");
+   if(i==d.a){sc++;ex.textContent="Верно! "+d.e}else{b.classList.add("bad");ex.textContent="Не совсем. "+d.e}
+   var n=document.createElement("button");n.textContent=qi==Q.length-1?"Показать результат":"Дальше";n.onclick=function(){qi++;show()};qb.appendChild(n);n.focus()};
+  w.appendChild(b)});
+}
+show();
+</script>
+</body>
+</html>
